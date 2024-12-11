@@ -1,6 +1,6 @@
-# License Card Detector
+# Card Adjuster
 
-A Streamlit application that detects and processes license cards from images, with the ability to export to PDF.
+A Streamlit application that detects and processes cards from images, with the ability to export to PDF.
 
 ## Features
 - Single image processing

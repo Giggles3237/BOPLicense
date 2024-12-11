@@ -99,8 +99,26 @@ def rotate_image(image):
         return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
     return image
 
+def create_downloadable_pdf(front_path, back_path=None, filename="license.pdf"):
+    # Create the PDF
+    if back_path is None:
+        # Single image mode - only use front image
+        create_pdf(front_path, front_path, filename, single_page=True)
+    else:
+        # Dual image mode - use both front and back
+        create_pdf(front_path, back_path, filename, single_page=False)
+    
+    # Read the PDF file
+    with open(filename, "rb") as f:
+        pdf_bytes = f.read()
+    
+    # Remove the temporary PDF file
+    os.remove(filename)
+    
+    return pdf_bytes
+
 def main():
-    st.title("License Card Detector")
+    st.title("Card Adjuster")
     
     # Initialize session state for rotation
     if 'rotation_angle' not in st.session_state:
@@ -132,8 +150,14 @@ def main():
                 if st.button("Export to PDF", key="pdf_single"):
                     try:
                         cv2.imwrite("temp_single.png", final_rounded)
-                        create_pdf("temp_single.png", "temp_single.png", "license_single.pdf")
-                        st.success("PDF created successfully! Check license_single.pdf")
+                        pdf_bytes = create_downloadable_pdf("temp_single.png", filename="license_single.pdf")
+                        
+                        st.download_button(
+                            label="Download PDF",
+                            data=pdf_bytes,
+                            file_name="license_single.pdf",
+                            mime="application/pdf"
+                        )
                     except Exception as e:
                         st.error(f"Error creating PDF: {str(e)}")
                     finally:
@@ -197,8 +221,14 @@ def main():
                 try:
                     cv2.imwrite("temp_front.png", front_rounded)
                     cv2.imwrite("temp_back.png", back_rounded)
-                    create_pdf("temp_front.png", "temp_back.png", "license_dual.pdf")
-                    st.success("PDF created successfully! Check license_dual.pdf")
+                    pdf_bytes = create_downloadable_pdf("temp_front.png", "temp_back.png", "license_dual.pdf")
+                    
+                    st.download_button(
+                        label="Download PDF",
+                        data=pdf_bytes,
+                        file_name="license_dual.pdf",
+                        mime="application/pdf"
+                    )
                 except Exception as e:
                     st.error(f"Error creating PDF: {str(e)}")
                 finally:
