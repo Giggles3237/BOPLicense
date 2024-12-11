@@ -188,16 +188,25 @@ def resize_to_license_dimensions(image, dpi=300):
 
 def create_pdf(front_path, back_path, output_path, single_page=False):
     c = canvas.Canvas(output_path, pagesize=letter)
-    width, height = letter
+    width, height = letter  # 8.5" x 11" in points (612 x 792)
+    
+    # Standard license dimensions (3.375" x 2.125")
+    license_width = 3.375 * 72  # Convert to points (242.5)
+    license_height = 2.125 * 72  # Convert to points (153)
+    
+    # Calculate center positions
+    x_center = (width - license_width) / 2
+    y_top = height - 100 - license_height  # Top position with margin
+    y_bottom = 100  # Bottom position with margin
     
     # Add front image
     img = ImageReader(front_path)
-    c.drawImage(img, 50, height/2 - 100, width-100, 200, preserveAspectRatio=True)
+    c.drawImage(img, x_center, y_top, license_width, license_height, preserveAspectRatio=True)
     
     if not single_page:
         # Add back image only if dual-page mode
         img = ImageReader(back_path)
-        c.drawImage(img, 50, height/4 - 100, width-100, 200, preserveAspectRatio=True)
+        c.drawImage(img, x_center, y_bottom, license_width, license_height, preserveAspectRatio=True)
     
     c.save()
 

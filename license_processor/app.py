@@ -82,22 +82,27 @@ def round_corners(image, radius=30):
     
     return result
 
-def rotate_image(image):
-    # Store rotation state in session state
-    if 'rotation_angle' not in st.session_state:
-        st.session_state.rotation_angle = 0
+def rotate_image(image, key):
+    # Initialize rotation state for this specific key if it doesn't exist
+    if f'rotation_{key}' not in st.session_state:
+        st.session_state[f'rotation_{key}'] = 0
     
-    # Update rotation angle
-    st.session_state.rotation_angle = (st.session_state.rotation_angle + 90) % 360
+    # Update rotation angle for this specific image only
+    st.session_state[f'rotation_{key}'] = (st.session_state[f'rotation_{key}'] + 90) % 360
+    angle = st.session_state[f'rotation_{key}']
     
-    # Apply rotation
-    if st.session_state.rotation_angle == 90:
-        return cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    elif st.session_state.rotation_angle == 180:
-        return cv2.rotate(image, cv2.ROTATE_180)
-    elif st.session_state.rotation_angle == 270:
-        return cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
-    return image
+    # Create a copy of the image to avoid modifying the original
+    result = image.copy()
+    
+    # Apply rotation based on this specific image's angle
+    if angle == 90:
+        result = cv2.rotate(result, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    elif angle == 180:
+        result = cv2.rotate(result, cv2.ROTATE_180)
+    elif angle == 270:
+        result = cv2.rotate(result, cv2.ROTATE_90_CLOCKWISE)
+    
+    return result
 
 def create_downloadable_pdf(front_path, back_path=None, filename="license.pdf"):
     # Create the PDF
@@ -120,10 +125,6 @@ def create_downloadable_pdf(front_path, back_path=None, filename="license.pdf"):
 def main():
     st.title("Card Adjuster")
     
-    # Initialize session state for rotation
-    if 'rotation_angle' not in st.session_state:
-        st.session_state.rotation_angle = 0
-    
     tab1, tab2 = st.tabs(["Single Image", "Front & Back"])
     
     with tab1:
@@ -136,8 +137,8 @@ def main():
             with col1:
                 threshold = st.number_input("Threshold", min_value=0, max_value=255, value=120, step=1, key="thresh_single")
             with col2:
-                if st.button(f"Rotate Image ({st.session_state.rotation_angle}°)", key="rotate_single"):
-                    image = rotate_image(image)
+                if st.button("Rotate Image", key="rotate_single"):
+                    image = rotate_image(image, "single")
             
             binary, contours, detection, box = process_image(image, threshold)
             
@@ -178,8 +179,8 @@ def main():
                 with fcol1:
                     front_threshold = st.number_input("Threshold", min_value=0, max_value=255, value=120, step=1, key="thresh_front")
                 with fcol2:
-                    if st.button(f"Rotate Image ({st.session_state.rotation_angle}°)", key="rotate_front"):
-                        front_image = rotate_image(front_image)
+                    if st.button("Rotate Image", key="rotate_front"):
+                        front_image = rotate_image(front_image, "front")
                 
                 front_binary, front_contours, front_detection, front_box = process_image(
                     front_image, front_threshold
@@ -202,8 +203,8 @@ def main():
                 with bcol1:
                     back_threshold = st.number_input("Threshold", min_value=0, max_value=255, value=120, step=1, key="thresh_back")
                 with bcol2:
-                    if st.button(f"Rotate Image ({st.session_state.rotation_angle}°)", key="rotate_back"):
-                        back_image = rotate_image(back_image)
+                    if st.button("Rotate Image", key="rotate_back"):
+                        back_image = rotate_image(back_image, "back")
                 
                 back_binary, back_contours, back_detection, back_box = process_image(
                     back_image, back_threshold
